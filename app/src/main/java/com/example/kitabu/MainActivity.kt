@@ -7,11 +7,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.kitabu.ui.theme.KitabuTheme
+import com.example.kitabu.ui.theme.MainBackground
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,9 +25,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             KitabuTheme {
+                val navController = rememberNavController()
+
+                window.navigationBarColor = MainBackground.toArgb()
+                window.statusBarColor = MainBackground.toArgb()
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     KitabuApp(
-                        name = "Android",
+                        navController = navController,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -31,17 +42,30 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun KitabuApp(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
+fun KitabuApp(navController : NavHostController, modifier: Modifier = Modifier) {
+    NavHost(
+        navController = navController,
+        startDestination = "Books",
         modifier = modifier
-    )
+    ){
+        composable("Books"){
+            BooksScreen(
+                navController = navController
+            )
+        }
+
+        composable("UserBooks"){
+            MyBooksSection(
+                navController = navController
+            )
+        }
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     KitabuTheme {
-        KitabuApp("Android")
+        KitabuApp(navController = NavHostController(LocalContext.current), modifier = Modifier)
     }
 }
