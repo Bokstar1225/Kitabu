@@ -1,6 +1,50 @@
 package com.example.kitabu.data
 
 import androidx.room3.Dao
+import androidx.room3.Delete
+import androidx.room3.Insert
+import androidx.room3.Query
+import androidx.room3.Update
 
 @Dao
-sealed interface BookDao{}
+sealed interface BookDao{
+    @Query("SELECT * FROM books")
+    suspend fun getAllBooks(): List<BookEntity>
+
+    @Query("SELECT * FROM books WHERE id = :bookId")
+    suspend fun getBookById(bookId: Int): BookEntity?
+
+    @Query("SELECT * FROM books WHERE rentStatus = false")
+    suspend fun getAvailableBooks(): List<BookEntity>
+
+
+    @Query("SELECT * FROM books WHERE rentStatus = true")
+    suspend fun getRentedBooks(): List<BookEntity>
+
+    @Query("SELECT * FROM books WHERE category = :category")
+    suspend fun getBooksByCategory(category: String): List<BookEntity>
+
+    @Insert
+    suspend fun insertBook(vararg book: BookEntity)
+
+    @Insert
+    suspend fun insertBooking(vararg booking: BookingEntity)
+
+    @Query("SELECT * FROM book_reservations")
+    suspend fun getAllBookings(): List<BookingEntity>
+
+    @Query("SELECT * FROM book_reservations WHERE bookOwnerId = :bookId")
+    suspend fun getBookingByBookId(bookId: Int): BookingEntity?
+
+    @Update
+    suspend fun updateBook(vararg book: BookEntity)
+
+    @Update
+    suspend fun updateBooking(vararg booking: BookingEntity)
+
+    @Delete
+    suspend fun deleteBook(vararg book: BookEntity)
+
+    @Delete
+    suspend fun deleteBooking(vararg booking: BookingEntity)
+}
