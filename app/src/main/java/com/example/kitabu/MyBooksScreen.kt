@@ -15,55 +15,51 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.kitabu.data.BookingStatus
+import com.example.kitabu.data.BookingWithBook
+import com.example.kitabu.ui.BookCoverView
 import com.example.kitabu.ui.theme.MainBackground
+import com.example.kitabu.viewModel.BookViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun MyBooksSection(
     modifier: Modifier = Modifier,
-    navController: NavController
+    navController: NavController,
+    viewModel: BookViewModel = viewModel()
 ) {
-
-    val myBooks = listOf(
-        MyBook(
-            title = "Things Fall Apart",
-            author = "Chinua Achebe",
-            progress = 0.65f,
-            progressText = "65%",
-            status = "Reading"
-        ),
-        MyBook(
-            title = "Long Walk to Freedom",
-            author = "Nelson Mandela",
-            progress = 1.0f,
-            progressText = "100%",
-            status = "Completed"
-        ),
-        MyBook(
-            title = "The Alchemist",
-            author = "Paulo Coelho",
-            progress = 0.20f,
-            progressText = "20%",
-            status = "Reading"
-        )
-    )
+    val bookingsWithBooks by viewModel.userBookings.collectAsState()
 
     val screens = listOf(
         NavigationItems.Books,
@@ -76,45 +72,57 @@ fun MyBooksSection(
             KitabuNavBar(navController = navController, items = screens)
         },
         containerColor = Color.White
-    ) {innerPadding ->
+    ) { innerPadding ->
         Column(
-            modifier = modifier.fillMaxWidth()
+            modifier = modifier
+                .fillMaxSize()
                 .background(MainBackground)
                 .padding(innerPadding)
-                .padding(horizontal = 12.dp)
+                .padding(horizontal = 16.dp)
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
+            Column {
                 Text(
                     text = "My Books",
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
-
-                TextButton(
-                    onClick = {
-                        // Later: navigate to all My Books
-                    }
-                ) {
-                    Text("See all")
-                }
+                Text(
+                    text = "Manage your current reservations.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            LazyColumn(
-                modifier = modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-
-                items(myBooks) { book ->
-
-                    MyBookCard(book = book)
+            if (bookingsWithBooks.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "You have no active reservations.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Gray
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(bookingsWithBooks) { item ->
+                        ReservationCard(
+                            item = item,
+                            onRenew = { viewModel.renewBooking(item) },
+                            onReturn = { viewModel.returnBook(item) },
+                            onCancel = { viewModel.cancelBooking(item) }
+                        )
+                    }
                 }
             }
         }
@@ -122,99 +130,191 @@ fun MyBooksSection(
 }
 
 @Composable
-fun MyBookCard(
-    book: MyBook
+fun ReservationCard(
+    item: BookingWithBook,
+    onRenew: () -> Unit,
+    onReturn: () -> Unit,
+    onCancel: () -> Unit
 ) {
+    val dateFormat = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
+    val reservedDateStr = dateFormat.format(Date(item.booking.bookingDate))
+    val dueDateStr = dateFormat.format(Date(item.booking.returnDeadline))
+
+    val diffMillis = item.booking.returnDeadline - System.currentTimeMillis()
+    val daysLeft = maxOf(0L, diffMillis / (1000 * 60 * 60 * 24))
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF4EFE6)
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            // Book cover
-            Box(
-                modifier = Modifier
-                    .size(width = 72.dp, height = 92.dp)
-                    .background(
-                        color = Color(0xFF6B705C),
-                        shape = RoundedCornerShape(10.dp)
-                    ),
-                contentAlignment = Alignment.Center
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-
-                Text(
-                    text = "BOOK",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-
-                Text(
-                    text = book.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                // Book Cover Box
+                BookCoverView(
+                    coverKey = item.book.coverImage,
+                    title = item.book.title,
+                    author = item.book.author,
+                    modifier = Modifier.size(width = 68.dp, height = 90.dp)
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.width(14.dp))
 
-                Text(
-                    text = book.author,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = item.book.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                        // Status Badge
+                        val badgeBg = when (item.booking.status) {
+                            BookingStatus.ACTIVE -> Color(0xFFEDE9FE)
+                            BookingStatus.PENDING -> Color(0xFFFFEDD5)
+                            BookingStatus.RETURNED -> Color(0xFFDCFCE7)
+                        }
+                        val badgeText = when (item.booking.status) {
+                            BookingStatus.ACTIVE -> Color(0xFF6D28D9)
+                            BookingStatus.PENDING -> Color(0xFFC2410C)
+                            BookingStatus.RETURNED -> Color(0xFF15803D)
+                        }
 
-                // Progress bar
-                LinearProgressIndicator(
-                    progress = { book.progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(10.dp)),
-                    color = Color(0xFF6B705C),
-                    trackColor = Color(0xFFD9D4C9)
-                )
+                        Box(
+                            modifier = Modifier
+                                .background(badgeBg, RoundedCornerShape(8.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = item.booking.status.name,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = badgeText,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
 
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = book.status,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF6B705C),
-                        fontWeight = FontWeight.SemiBold
+                        text = item.book.author,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
                     )
 
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Date Row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarToday,
+                                contentDescription = null,
+                                tint = Color.Gray,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Reserved: $reservedDateStr",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Gray
+                            )
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarToday,
+                                contentDescription = null,
+                                tint = Color.Gray,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Due: $dueDateStr",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
                     Text(
-                        text = book.progressText,
+                        text = "$daysLeft days left",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color.Gray
+                        color = Color(0xFF3B82F6),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Action Buttons Row (Renew, Return, Cancel)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onRenew,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Renew",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Renew", style = MaterialTheme.typography.labelMedium)
+                }
+
+                OutlinedButton(
+                    onClick = onReturn,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Return",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Return", style = MaterialTheme.typography.labelMedium)
+                }
+
+                Button(
+                    onClick = onCancel,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFEE2E2))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Cancel,
+                        contentDescription = "Cancel",
+                        tint = Color(0xFFDC2626),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Cancel",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFFDC2626),
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -224,6 +324,8 @@ fun MyBookCard(
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun MyBooksSectionPreview(){
-    MyBooksSection(navController = NavController(LocalContext.current), modifier = Modifier)
+fun MyBooksSectionPreview() {
+    if (!androidx.compose.ui.platform.LocalInspectionMode.current) {
+        MyBooksSection(navController = NavController(LocalContext.current), modifier = Modifier)
+    }
 }

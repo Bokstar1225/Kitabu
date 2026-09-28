@@ -1,55 +1,39 @@
 package com.example.kitabu.data
 
-class BookRepository(private val bookDao: BookDao){
-    suspend fun getAllBooks(): List<BookEntity> {
-        return bookDao.getAllBooks()
-    }
+class BookRepository(private val bookDao: BookDao) {
+    suspend fun getAllBooks(): List<BookEntity> = bookDao.getAllBooks()
 
-    suspend fun getBookById(bookId: Int): BookEntity? {
-        return bookDao.getBookById(bookId)
-    }
+    suspend fun getBookById(bookId: Int): BookEntity? = bookDao.getBookById(bookId)
 
-    suspend fun getAvailableBooks(): List<BookEntity> {
-        return bookDao.getAvailableBooks()
-    }
+    suspend fun getAvailableBooks(): List<BookEntity> = bookDao.getAvailableBooks()
 
-    suspend fun getRentedBooks(): List<BookEntity> {
-        return bookDao.getRentedBooks()
-    }
+    suspend fun getRentedBooks(): List<BookEntity> = bookDao.getRentedBooks()
 
-    suspend fun getBooksByCategory(category: String): List<BookEntity> {
-        return bookDao.getBooksByCategory(category)
-    }
+    suspend fun getBooksByCategory(category: String): List<BookEntity> = bookDao.getBooksByCategory(category)
 
-    suspend fun insertBook(book: BookEntity) {
-        return bookDao.insertBook(book)
-    }
+    suspend fun insertBook(book: BookEntity) = bookDao.insertBook(book)
 
-    suspend fun insertBooking(booking: BookingEntity){
-        return bookDao.insertBooking(booking)
-    }
+    suspend fun updateBook(book: BookEntity) = bookDao.updateBook(book)
 
-    suspend fun getAllBookings(): List<BookingEntity>{
-        return bookDao.getAllBookings()
-    }
+    suspend fun deleteBook(book: BookEntity) = bookDao.deleteBook(book)
 
-    suspend fun getBookingByBookId(bookId: Int): BookingEntity?{
-        return bookDao.getBookingByBookId(bookId)
-    }
+    suspend fun insertBooking(booking: BookingEntity) = bookDao.insertBooking(booking)
 
-    suspend fun updateBook(book: BookEntity) {
-        return bookDao.updateBook(book)
-    }
+    suspend fun getAllBookings(): List<BookingEntity> = bookDao.getAllBookings()
 
-    suspend fun updateBooking(booking: BookingEntity){
-        return bookDao.updateBooking(booking)
-    }
+    suspend fun getBookingByBookId(bookId: Int): BookingEntity? = bookDao.getBookingByBookId(bookId)
 
-    suspend fun deleteBook(book: BookEntity) {
-        return bookDao.deleteBook(book)
-    }
+    suspend fun updateBooking(booking: BookingEntity) = bookDao.updateBooking(booking)
 
-    suspend fun deleteBooking(booking: BookingEntity){
-        return bookDao.deleteBooking(booking)
+    suspend fun deleteBooking(booking: BookingEntity) = bookDao.deleteBooking(booking)
+
+    suspend fun getBookingsWithBooks(): List<BookingWithBook> {
+        val bookings = bookDao.getAllBookings()
+        val books = bookDao.getAllBooks().associateBy { it.id }
+        return bookings.mapNotNull { booking ->
+            books[booking.bookOwnerId]?.let { book ->
+                BookingWithBook(booking = booking, book = book)
+            }
+        }
     }
 }

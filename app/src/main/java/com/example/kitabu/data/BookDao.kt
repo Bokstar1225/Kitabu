@@ -3,11 +3,12 @@ package com.example.kitabu.data
 import androidx.room3.Dao
 import androidx.room3.Delete
 import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import androidx.room3.Update
 
 @Dao
-sealed interface BookDao{
+interface BookDao {
     @Query("SELECT * FROM books")
     suspend fun getAllBooks(): List<BookEntity>
 
@@ -17,17 +18,16 @@ sealed interface BookDao{
     @Query("SELECT * FROM books WHERE rentStatus = false")
     suspend fun getAvailableBooks(): List<BookEntity>
 
-
     @Query("SELECT * FROM books WHERE rentStatus = true")
     suspend fun getRentedBooks(): List<BookEntity>
 
     @Query("SELECT * FROM books WHERE category = :category")
     suspend fun getBooksByCategory(category: String): List<BookEntity>
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBook(vararg book: BookEntity)
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBooking(vararg booking: BookingEntity)
 
     @Query("SELECT * FROM book_reservations")
