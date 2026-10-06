@@ -3,13 +3,9 @@ package com.example.kitabu.data
 class BookRepository(private val bookDao: BookDao) {
     suspend fun getAllBooks(): List<BookEntity> = bookDao.getAllBooks()
 
-    suspend fun getBookById(bookId: Int): BookEntity? = bookDao.getBookById(bookId)
-
     suspend fun getAvailableBooks(): List<BookEntity> = bookDao.getAvailableBooks()
 
     suspend fun getRentedBooks(): List<BookEntity> = bookDao.getRentedBooks()
-
-    suspend fun getBooksByCategory(category: String): List<BookEntity> = bookDao.getBooksByCategory(category)
 
     suspend fun insertBook(book: BookEntity) = bookDao.insertBook(book)
 

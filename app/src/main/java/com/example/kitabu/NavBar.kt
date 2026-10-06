@@ -41,7 +41,7 @@ fun KitabuNavBar(navController: NavController, items : List<NavigationItems>){
 
     // Use NavigationBar directly without the Surface wrapper
     NavigationBar(
-        modifier = Modifier.fillMaxWidth().height(80.dp).navigationBarsPadding(), // Anchors to the edges
+        modifier = Modifier.fillMaxWidth().height(105.dp).navigationBarsPadding(), // Anchors to the edges
         containerColor = Color.White,
         tonalElevation = 8.dp, // Gives it a slight shadow
         // Notice: NO .navigationBarsPadding() here! Material 3 handles it automatically

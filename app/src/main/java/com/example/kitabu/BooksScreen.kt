@@ -382,7 +382,7 @@ fun BookCardItem(
                 author = book.author,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .height(240.dp)
             )
 
             Spacer(modifier = Modifier.height(10.dp))

@@ -7,8 +7,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,12 +32,12 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
 
                 window.navigationBarColor = MainBackground.toArgb()
-                window.statusBarColor = MainBackground.toArgb()
+                window.statusBarColor = Color.White.toArgb()
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Surface(modifier = Modifier.fillMaxSize()) {
                     KitabuApp(
                         navController = navController,
-                        modifier = Modifier.padding(innerPadding)
+
                     )
                 }
             }
