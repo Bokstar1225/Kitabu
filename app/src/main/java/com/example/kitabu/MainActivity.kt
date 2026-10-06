@@ -5,8 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -36,8 +34,7 @@ class MainActivity : ComponentActivity() {
 
                 Surface(modifier = Modifier.fillMaxSize()) {
                     KitabuApp(
-                        navController = navController,
-
+                        navController = navController
                     )
                 }
             }
@@ -65,6 +62,13 @@ fun KitabuApp(
 
         composable("UserBooks") {
             MyBooksSection(
+                navController = navController,
+                viewModel = bookViewModel
+            )
+        }
+
+        composable("BookHistory") {
+            BookHistorySection(
                 navController = navController,
                 viewModel = bookViewModel
             )

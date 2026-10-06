@@ -18,9 +18,6 @@ interface BookDao {
     @Query("SELECT * FROM books WHERE rentStatus = false")
     suspend fun getAvailableBooks(): List<BookEntity>
 
-    @Query("SELECT * FROM books WHERE rentStatus = true")
-    suspend fun getRentedBooks(): List<BookEntity>
-
     @Query("SELECT * FROM books WHERE category = :category")
     suspend fun getBooksByCategory(category: String): List<BookEntity>
 
@@ -28,10 +25,16 @@ interface BookDao {
     suspend fun insertBook(vararg book: BookEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBooking(vararg booking: BookingEntity)
+    suspend fun insertBooking(booking: BookingEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBookingHistory(history: BookingHistoryEntity)
 
     @Query("SELECT * FROM book_reservations")
     suspend fun getAllBookings(): List<BookingEntity>
+
+    @Query("SELECT * FROM booking_history ORDER BY actionDate DESC")
+    suspend fun getAllBookingHistory(): List<BookingHistoryEntity>
 
     @Query("SELECT * FROM book_reservations WHERE bookOwnerId = :bookId")
     suspend fun getBookingByBookId(bookId: Int): BookingEntity?

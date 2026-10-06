@@ -16,8 +16,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Search
@@ -235,7 +237,7 @@ fun BooksScreen(
             }
         }
 
-        // Reservation Modal Bottom Sheet with Calendar
+        // Reservation Modal Bottom Sheet with Scrollable Calendar
         if (showBottomSheet && selectedBookForReservation != null) {
             val book = selectedBookForReservation!!
             val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -251,6 +253,7 @@ fun BooksScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
                         .padding(24.dp)
                 ) {
                     Row(
@@ -357,6 +360,8 @@ fun BooksScreen(
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }
@@ -382,7 +387,7 @@ fun BookCardItem(
                 author = book.author,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(240.dp)
+                    .height(200.dp)
             )
 
             Spacer(modifier = Modifier.height(10.dp))

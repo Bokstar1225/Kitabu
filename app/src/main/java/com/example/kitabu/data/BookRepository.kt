@@ -5,8 +5,6 @@ class BookRepository(private val bookDao: BookDao) {
 
     suspend fun getAvailableBooks(): List<BookEntity> = bookDao.getAvailableBooks()
 
-    suspend fun getRentedBooks(): List<BookEntity> = bookDao.getRentedBooks()
-
     suspend fun insertBook(book: BookEntity) = bookDao.insertBook(book)
 
     suspend fun updateBook(book: BookEntity) = bookDao.updateBook(book)
@@ -15,7 +13,11 @@ class BookRepository(private val bookDao: BookDao) {
 
     suspend fun insertBooking(booking: BookingEntity) = bookDao.insertBooking(booking)
 
+    suspend fun insertBookingHistory(history: BookingHistoryEntity) = bookDao.insertBookingHistory(history)
+
     suspend fun getAllBookings(): List<BookingEntity> = bookDao.getAllBookings()
+
+    suspend fun getAllBookingHistory(): List<BookingHistoryEntity> = bookDao.getAllBookingHistory()
 
     suspend fun getBookingByBookId(bookId: Int): BookingEntity? = bookDao.getBookingByBookId(bookId)
 
@@ -29,6 +31,16 @@ class BookRepository(private val bookDao: BookDao) {
         return bookings.mapNotNull { booking ->
             books[booking.bookOwnerId]?.let { book ->
                 BookingWithBook(booking = booking, book = book)
+            }
+        }
+    }
+
+    suspend fun getBookingHistoryWithBooks(): List<HistoryWithBook> {
+        val histories = bookDao.getAllBookingHistory()
+        val books = bookDao.getAllBooks().associateBy { it.id }
+        return histories.mapNotNull { history ->
+            books[history.bookOwnerId]?.let { book ->
+                HistoryWithBook(history = history, book = book)
             }
         }
     }

@@ -7,8 +7,10 @@ import com.example.kitabu.data.AppDatabase
 import com.example.kitabu.data.BookEntity
 import com.example.kitabu.data.BookRepository
 import com.example.kitabu.data.BookingEntity
+import com.example.kitabu.data.BookingHistoryEntity
 import com.example.kitabu.data.BookingStatus
 import com.example.kitabu.data.BookingWithBook
+import com.example.kitabu.data.HistoryWithBook
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +24,9 @@ class BookViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _userBookings = MutableStateFlow<List<BookingWithBook>>(emptyList())
     val userBookings: StateFlow<List<BookingWithBook>> = _userBookings.asStateFlow()
+
+    private val _bookingHistory = MutableStateFlow<List<HistoryWithBook>>(emptyList())
+    val bookingHistory: StateFlow<List<HistoryWithBook>> = _bookingHistory.asStateFlow()
 
     init {
         val bookDao = AppDatabase.getDatabase(application).bookDao()
@@ -75,6 +80,7 @@ class BookViewModel(application: Application) : AndroidViewModel(application) {
             }
             _allBooks.value = books
             _userBookings.value = repository.getBookingsWithBooks()
+            _bookingHistory.value = repository.getBookingHistoryWithBooks()
         }
     }
 
@@ -88,6 +94,14 @@ class BookViewModel(application: Application) : AndroidViewModel(application) {
                 status = BookingStatus.ACTIVE
             )
             repository.insertBooking(booking)
+            repository.insertBookingHistory(
+                BookingHistoryEntity(
+                    bookOwnerId = book.id,
+                    userName = userName,
+                    actionType = "RENTED",
+                    actionDate = System.currentTimeMillis()
+                )
+            )
             repository.updateBook(book.copy(rentStatus = true))
             refreshData()
         }
@@ -96,15 +110,30 @@ class BookViewModel(application: Application) : AndroidViewModel(application) {
     fun cancelBooking(bookingWithBook: BookingWithBook) {
         viewModelScope.launch {
             repository.deleteBooking(bookingWithBook.booking)
+            repository.insertBookingHistory(
+                BookingHistoryEntity(
+                    bookOwnerId = bookingWithBook.book.id,
+                    userName = bookingWithBook.booking.userName,
+                    actionType = "CANCELLED",
+                    actionDate = System.currentTimeMillis()
+                )
+            )
             repository.updateBook(bookingWithBook.book.copy(rentStatus = false))
             refreshData()
         }
     }
 
-    fun renewBooking(bookingWithBook: BookingWithBook, additionalDays: Int = 7) {
+    fun renewBooking(bookingWithBook: BookingWithBook, newDeadlineMillis: Long) {
         viewModelScope.launch {
-            val updatedDeadline = bookingWithBook.booking.returnDeadline + (additionalDays * 24 * 60 * 60 * 1000L)
-            repository.updateBooking(bookingWithBook.booking.copy(returnDeadline = updatedDeadline))
+            repository.updateBooking(bookingWithBook.booking.copy(returnDeadline = newDeadlineMillis))
+            repository.insertBookingHistory(
+                BookingHistoryEntity(
+                    bookOwnerId = bookingWithBook.book.id,
+                    userName = bookingWithBook.booking.userName,
+                    actionType = "RENEWED",
+                    actionDate = System.currentTimeMillis()
+                )
+            )
             refreshData()
         }
     }
@@ -112,6 +141,14 @@ class BookViewModel(application: Application) : AndroidViewModel(application) {
     fun returnBook(bookingWithBook: BookingWithBook) {
         viewModelScope.launch {
             repository.deleteBooking(bookingWithBook.booking)
+            repository.insertBookingHistory(
+                BookingHistoryEntity(
+                    bookOwnerId = bookingWithBook.book.id,
+                    userName = bookingWithBook.booking.userName,
+                    actionType = "RETURNED",
+                    actionDate = System.currentTimeMillis()
+                )
+            )
             repository.updateBook(bookingWithBook.book.copy(rentStatus = false))
             refreshData()
         }

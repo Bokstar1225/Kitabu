@@ -14,9 +14,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
@@ -25,15 +26,22 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,11 +56,13 @@ import com.example.kitabu.data.BookingStatus
 import com.example.kitabu.data.BookingWithBook
 import com.example.kitabu.ui.BookCoverView
 import com.example.kitabu.ui.theme.MainBackground
+import com.example.kitabu.ui.theme.PrimaryDarkPurple
 import com.example.kitabu.viewModel.BookViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyBooksSection(
     modifier: Modifier = Modifier,
@@ -60,6 +70,9 @@ fun MyBooksSection(
     viewModel: BookViewModel = viewModel()
 ) {
     val bookingsWithBooks by viewModel.userBookings.collectAsState()
+
+    var selectedBookingForRenew by remember { mutableStateOf<BookingWithBook?>(null) }
+    var showRenewBottomSheet by remember { mutableStateOf(false) }
 
     val screens = listOf(
         NavigationItems.Books,
@@ -118,11 +131,120 @@ fun MyBooksSection(
                     items(bookingsWithBooks) { item ->
                         ReservationCard(
                             item = item,
-                            onRenew = { viewModel.renewBooking(item) },
+                            onRenew = {
+                                selectedBookingForRenew = item
+                                showRenewBottomSheet = true
+                            },
                             onReturn = { viewModel.returnBook(item) },
                             onCancel = { viewModel.cancelBooking(item) }
                         )
                     }
+                }
+            }
+        }
+
+        // Renew Reservation Calendar Modal Bottom Sheet
+        if (showRenewBottomSheet && selectedBookingForRenew != null) {
+            val item = selectedBookingForRenew!!
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            val currentDeadline = item.booking.returnDeadline
+            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = currentDeadline)
+
+            ModalBottomSheet(
+                onDismissRequest = { showRenewBottomSheet = false },
+                sheetState = sheetState,
+                containerColor = Color.White,
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(24.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        BookCoverView(
+                            coverKey = item.book.coverImage,
+                            title = item.book.title,
+                            author = item.book.author,
+                            modifier = Modifier.size(width = 80.dp, height = 105.dp)
+                        )
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = item.book.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = item.book.author,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0xFFE0E0FF), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = item.book.category,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = PrimaryDarkPurple,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Text(
+                        text = "Renew Reservation",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Select a new deadline date on the calendar to extend your rental.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Embedded Calendar
+                    DatePicker(
+                        state = datePickerState,
+                        showModeToggle = false,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Button(
+                        onClick = {
+                            val newDeadline = datePickerState.selectedDateMillis ?: currentDeadline
+                            viewModel.renewBooking(item, newDeadline)
+                            showRenewBottomSheet = false
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(25.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryDarkPurple)
+                    ) {
+                        Text(
+                            text = "Confirm Renewal",
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }
