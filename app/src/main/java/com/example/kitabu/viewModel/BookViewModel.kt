@@ -84,25 +84,46 @@ class BookViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun reserveBook(book: BookEntity, returnDeadlineMillis: Long, userName: String = "User") {
+    fun reserveBook(
+        book: BookEntity,
+        bookingDateMillis: Long,
+        returnDeadlineMillis: Long,
+        userName: String = "User"
+    ) {
         viewModelScope.launch {
             val booking = BookingEntity(
                 bookOwnerId = book.id,
                 userName = userName,
-                bookingDate = System.currentTimeMillis(),
+                bookingDate = bookingDateMillis,
                 returnDeadline = returnDeadlineMillis,
-                status = BookingStatus.ACTIVE
+                status = BookingStatus.PENDING
             )
             repository.insertBooking(booking)
             repository.insertBookingHistory(
                 BookingHistoryEntity(
                     bookOwnerId = book.id,
                     userName = userName,
-                    actionType = "RENTED",
+                    actionType = "RESERVED (PENDING)",
                     actionDate = System.currentTimeMillis()
                 )
             )
             repository.updateBook(book.copy(rentStatus = true))
+            refreshData()
+        }
+    }
+
+    fun activateBooking(bookingWithBook: BookingWithBook) {
+        viewModelScope.launch {
+            val updatedBooking = bookingWithBook.booking.copy(status = BookingStatus.ACTIVE)
+            repository.updateBooking(updatedBooking)
+            repository.insertBookingHistory(
+                BookingHistoryEntity(
+                    bookOwnerId = bookingWithBook.book.id,
+                    userName = bookingWithBook.booking.userName,
+                    actionType = "PICKED UP (ACTIVE)",
+                    actionDate = System.currentTimeMillis()
+                )
+            )
             refreshData()
         }
     }

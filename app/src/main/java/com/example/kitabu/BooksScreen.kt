@@ -28,7 +28,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -40,7 +40,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -237,12 +237,16 @@ fun BooksScreen(
             }
         }
 
-        // Reservation Modal Bottom Sheet with Scrollable Calendar
+        // Reservation Modal Bottom Sheet with Scrollable DateRangePicker
         if (showBottomSheet && selectedBookForReservation != null) {
             val book = selectedBookForReservation!!
             val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-            val initialDeadline = remember { System.currentTimeMillis() + (14 * 24 * 60 * 60 * 1000L) }
-            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialDeadline)
+            val initialStart = remember { System.currentTimeMillis() }
+            val initialEnd = remember { System.currentTimeMillis() + (14 * 24 * 60 * 60 * 1000L) }
+            val dateRangePickerState = rememberDateRangePickerState(
+                initialSelectedStartDateMillis = initialStart,
+                initialSelectedEndDateMillis = initialEnd
+            )
 
             ModalBottomSheet(
                 onDismissRequest = { showBottomSheet = false },
@@ -298,24 +302,32 @@ fun BooksScreen(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Text(
-                        text = "Select Return Date",
+                        text = "Select Rental Dates",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Choose a deadline on the calendar for your reservation.",
+                        text = "Select start rent date and return deadline on the calendar.",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Embedded Calendar
-                    DatePicker(
-                        state = datePickerState,
-                        showModeToggle = false,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    // Embedded Date Range Calendar
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(420.dp)
+                    ) {
+                        DateRangePicker(
+                            state = dateRangePickerState,
+                            showModeToggle = false,
+                            title = null,
+                            headline = null,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
@@ -326,8 +338,9 @@ fun BooksScreen(
                         Button(
                             onClick = {
                                 if (!book.rentStatus) {
-                                    val deadline = datePickerState.selectedDateMillis ?: initialDeadline
-                                    viewModel.reserveBook(book, deadline)
+                                    val startDate = dateRangePickerState.selectedStartDateMillis ?: initialStart
+                                    val endDate = dateRangePickerState.selectedEndDateMillis ?: initialEnd
+                                    viewModel.reserveBook(book, startDate, endDate)
                                     showBottomSheet = false
                                 }
                             },
@@ -387,7 +400,7 @@ fun BookCardItem(
                 author = book.author,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(180.dp)
             )
 
             Spacer(modifier = Modifier.height(10.dp))

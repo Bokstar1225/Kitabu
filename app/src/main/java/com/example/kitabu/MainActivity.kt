@@ -29,8 +29,8 @@ class MainActivity : ComponentActivity() {
             KitabuTheme {
                 val navController = rememberNavController()
 
-                window.navigationBarColor = MainBackground.toArgb()
-                window.statusBarColor = Color.White.toArgb()
+                window.navigationBarColor = Color.White.toArgb()
+                window.statusBarColor = MainBackground.toArgb()
 
                 Surface(modifier = Modifier.fillMaxSize()) {
                     KitabuApp(

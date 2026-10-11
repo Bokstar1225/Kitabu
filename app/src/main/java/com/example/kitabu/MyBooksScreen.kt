@@ -131,6 +131,7 @@ fun MyBooksSection(
                     items(bookingsWithBooks) { item ->
                         ReservationCard(
                             item = item,
+                            onActivate = { viewModel.activateBooking(item) },
                             onRenew = {
                                 selectedBookingForRenew = item
                                 showRenewBottomSheet = true
@@ -217,11 +218,19 @@ fun MyBooksSection(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Embedded Calendar
-                    DatePicker(
-                        state = datePickerState,
-                        showModeToggle = false,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(420.dp)
+                    ) {
+                        DatePicker(
+                            state = datePickerState,
+                            showModeToggle = false,
+                            title = null,
+                            headline = null,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
@@ -254,6 +263,7 @@ fun MyBooksSection(
 @Composable
 fun ReservationCard(
     item: BookingWithBook,
+    onActivate: () -> Unit,
     onRenew: () -> Unit,
     onReturn: () -> Unit,
     onCancel: () -> Unit
@@ -386,58 +396,96 @@ fun ReservationCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Action Buttons Row (Renew, Return, Cancel)
+            // Action Buttons Row based on Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(
-                    onClick = onRenew,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Renew",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Renew", style = MaterialTheme.typography.labelMedium)
-                }
+                if (item.booking.status == BookingStatus.PENDING) {
+                    Button(
+                        onClick = onActivate,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryDarkPurple)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Confirm Pickup",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Confirm Pickup", style = MaterialTheme.typography.labelMedium)
+                    }
 
-                OutlinedButton(
-                    onClick = onReturn,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Return",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Return", style = MaterialTheme.typography.labelMedium)
-                }
+                    Button(
+                        onClick = onCancel,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFEE2E2))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Cancel,
+                            contentDescription = "Cancel",
+                            tint = Color(0xFFDC2626),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Cancel",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color(0xFFDC2626),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = onRenew,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Renew",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Renew", style = MaterialTheme.typography.labelMedium)
+                    }
 
-                Button(
-                    onClick = onCancel,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFEE2E2))
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Cancel,
-                        contentDescription = "Cancel",
-                        tint = Color(0xFFDC2626),
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Cancel",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFFDC2626),
-                        fontWeight = FontWeight.Bold
-                    )
+                    OutlinedButton(
+                        onClick = onReturn,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Return",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Return", style = MaterialTheme.typography.labelMedium)
+                    }
+
+                    Button(
+                        onClick = onCancel,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFEE2E2))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Cancel,
+                            contentDescription = "Cancel",
+                            tint = Color(0xFFDC2626),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Cancel",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color(0xFFDC2626),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
