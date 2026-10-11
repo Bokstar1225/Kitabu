@@ -66,7 +66,7 @@ fun KitabuNavBar(navController: NavController, items : List<NavigationItems>){
                 icon = {
                     // Standard styling for all other icons
                     Icon(
-                        painter = if (isSelected) painterResource(id = item.SelectedIcon) else painterResource(id = item.UnselectedIcon),
+                        imageVector = if (isSelected) item.SelectedIcon else item.UnselectedIcon,
                         contentDescription = item.name,
                         modifier = Modifier.size(22.dp),
                     )
