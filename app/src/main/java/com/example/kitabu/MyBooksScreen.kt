@@ -495,7 +495,5 @@ fun ReservationCard(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun MyBooksSectionPreview() {
-    if (!androidx.compose.ui.platform.LocalInspectionMode.current) {
-        MyBooksSection(navController = NavController(LocalContext.current), modifier = Modifier)
-    }
+    MyBooksSection(navController = NavController(LocalContext.current), modifier = Modifier)
 }
