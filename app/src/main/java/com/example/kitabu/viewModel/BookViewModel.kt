@@ -36,49 +36,61 @@ class BookViewModel(application: Application) : AndroidViewModel(application) {
 
     fun refreshData() {
         viewModelScope.launch {
-            var books = repository.getAllBooks()
-            if (books.isEmpty()) {
-                val initialBooks = listOf(
-                    BookEntity(
-                        title = "Things Fall Apart",
-                        author = "Chinua Achebe",
-                        category = "Fiction",
-                        rentStatus = false,
-                        coverImage = "things_fall_apart"
-                    ),
-                    BookEntity(
-                        title = "The Alchemist",
-                        author = "Paulo Coelho",
-                        category = "Fiction",
-                        rentStatus = false,
-                        coverImage = "the_alchemist"
-                    ),
-                    BookEntity(
-                        title = "Half of a Yellow Sun",
-                        author = "Chimamanda Ngozi Adichie",
-                        category = "Fiction",
-                        rentStatus = false,
-                        coverImage = "half_of_a_yellow_sun"
-                    ),
-                    BookEntity(
-                        title = "Long Walk to Freedom",
-                        author = "Nelson Mandela",
-                        category = "Biography",
-                        rentStatus = false,
-                        coverImage = "long_walk_to_freedom"
-                    ),
-                    BookEntity(
-                        title = "We Need New Names",
-                        author = "NoViolet Bulawayo",
-                        category = "Fiction",
-                        rentStatus = false,
-                        coverImage = "we_need_new_names"
-                    )
+            val initialBooks = listOf(
+                BookEntity(
+                    title = "Things Fall Apart",
+                    author = "Chinua Achebe",
+                    category = "Fiction",
+                    rentStatus = false,
+                    coverImage = "things_fall_apart"
+                ),
+                BookEntity(
+                    title = "The Alchemist",
+                    author = "Paulo Coelho",
+                    category = "Fiction",
+                    rentStatus = false,
+                    coverImage = "the_alchemist"
+                ),
+                BookEntity(
+                    title = "Half of a Yellow Sun",
+                    author = "Chimamanda Ngozi Adichie",
+                    category = "Fiction",
+                    rentStatus = false,
+                    coverImage = "half_of_a_yellow_sun"
+                ),
+                BookEntity(
+                    title = "Long Walk to Freedom",
+                    author = "Nelson Mandela",
+                    category = "Biography",
+                    rentStatus = false,
+                    coverImage = "long_walk_to_freedom"
+                ),
+                BookEntity(
+                    title = "We Need New Names",
+                    author = "NoViolet Bulawayo",
+                    category = "Fiction",
+                    rentStatus = false,
+                    coverImage = "we_need_new_names"
+                ),
+                BookEntity(
+                    title = "Diary of a Wimpy Kid",
+                    author = "Jeff Kinney",
+                    category = "Fiction",
+                    rentStatus = false,
+                    coverImage = "diary_of_a_wimpy_kid"
                 )
-                initialBooks.forEach { repository.insertBook(it) }
-                books = repository.getAllBooks()
+            )
+
+            var existingBooks = repository.getAllBooks()
+            val existingTitles = existingBooks.map { it.title.lowercase() }.toSet()
+
+            val missingBooks = initialBooks.filter { it.title.lowercase() !in existingTitles }
+            if (missingBooks.isNotEmpty()) {
+                missingBooks.forEach { repository.insertBook(it) }
+                existingBooks = repository.getAllBooks()
             }
-            _allBooks.value = books
+
+            _allBooks.value = existingBooks
             _userBookings.value = repository.getBookingsWithBooks()
             _bookingHistory.value = repository.getBookingHistoryWithBooks()
         }
